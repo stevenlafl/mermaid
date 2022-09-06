@@ -59,11 +59,12 @@ export const lookUpDomId = function (id) {
  * @param text
  * @param type
  * @param style
+ * @param icon
  * @param classes
  * @param dir
  * @param props
  */
-export const addVertex = function (_id, text, type, style, classes, dir, props = {}) {
+export const addVertex = function (_id, text, type, style, icon, classes, dir, props = {}) {
   let txt;
   let id = _id;
   if (typeof id === 'undefined') {
@@ -108,6 +109,9 @@ export const addVertex = function (_id, text, type, style, classes, dir, props =
         vertices[id].styles.push(s);
       });
     }
+  }
+  if (typeof icon !== 'undefined') {
+    vertices[id].icon = icon;
   }
   if (typeof classes !== 'undefined') {
     if (classes !== null) {
@@ -187,7 +191,7 @@ export const updateLinkInterpolate = function (positions, interp) {
  * @param positions
  * @param style
  */
-export const updateLink = function (positions, style) {
+export const updateLinkStyle = function (positions, style) {
   positions.forEach(function (pos) {
     if (pos === 'default') {
       edges.defaultStyle = style;
@@ -200,7 +204,27 @@ export const updateLink = function (positions, style) {
   });
 };
 
-export const addClass = function (id, style) {
+/**
+ * Updates a link with a style
+ *
+ * @param positions
+ * @param style
+ */
+export const updateLinkIcon = function (positions, style) {
+  console.log('updateLinkIcon');
+  positions.forEach(function (pos) {
+    if (pos === 'default') {
+      edges.defaultStyle = style;
+    } else {
+      if (utils.isSubstringInArray('fill', style) === -1) {
+        style.push('fill:none');
+      }
+      edges[pos].style = style;
+    }
+  });
+};
+
+export const addClass = function (id, style, icon) {
   if (typeof classes[id] === 'undefined') {
     classes[id] = { id: id, styles: [], textStyles: [] };
   }
@@ -208,6 +232,19 @@ export const addClass = function (id, style) {
   if (typeof style !== 'undefined') {
     if (style !== null) {
       style.forEach(function (s) {
+        if (s.match('color')) {
+          const newStyle1 = s.replace('fill', 'bgFill');
+          const newStyle2 = newStyle1.replace('color', 'fill');
+          classes[id].textStyles.push(newStyle2);
+        }
+        classes[id].styles.push(s);
+      });
+    }
+  }
+
+  if (typeof icon !== 'undefined') {
+    if (icon !== null) {
+      icon.forEach(function (s) {
         if (s.match('color')) {
           const newStyle1 = s.replace('fill', 'bgFill');
           const newStyle2 = newStyle1.replace('color', 'fill');
@@ -754,7 +791,8 @@ export default {
   lookUpDomId,
   addLink,
   updateLinkInterpolate,
-  updateLink,
+  updateLinkStyle,
+  updateLinkIcon,
   addClass,
   setDirection,
   setClass,

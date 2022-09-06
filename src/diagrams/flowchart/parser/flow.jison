@@ -41,6 +41,7 @@ accDescr\s*"{"\s*                                { this.begin("acc_descr_multili
 <string>["]             this.popState();
 <string>[^"]*           return "STR";
 "style"               return 'STYLE';
+"icon"                return 'ICON';
 "default"             return 'DEFAULT';
 "linkStyle"           return 'LINKSTYLE';
 "interpolate"         return 'INTERPOLATE';
@@ -117,6 +118,7 @@ that id.
 ";"                   return 'SEMI';
 ","                   return 'COMMA';
 "*"                   return 'MULT';
+"!"                   return 'EXCLAMATION';
 \s*[xo<]?\-\-+[-xo>]\s*     return 'LINK';
 \s*[xo<]?\=\=+[=xo>]\s*     return 'LINK';
 \s*[xo<]?\-?\.+\-[xo>]?\s*  return 'LINK';
@@ -330,6 +332,7 @@ statement
     : verticeStatement separator
     { /* console.warn('finat vs', $1.nodes); */ $$=$1.nodes}
     | styleStatement separator
+    | iconStatement separator
     {$$=[];}
     | linkStyleStatement separator
     {$$=[];}
@@ -385,7 +388,7 @@ vertex:  idString SQS text SQE
     | idString SUBROUTINESTART text SUBROUTINEEND
         {$$ = $1;yy.addVertex($1,$3,'subroutine');}
     | idString VERTEX_WITH_PROPS_START ALPHA COLON ALPHA PIPE text SQE
-        {$$ = $1;yy.addVertex($1,$7,'rect',undefined,undefined,undefined, Object.fromEntries([[$3, $5]]));}
+        {$$ = $1;yy.addVertex($1,$7,'rect',undefined,undefined,undefined,undefined, Object.fromEntries([[$3, $5]]));}
     | idString CYLINDERSTART text CYLINDEREND
         {$$ = $1;yy.addVertex($1,$3,'cylinder');}
     | idString PS text PE
@@ -404,6 +407,8 @@ vertex:  idString SQS text SQE
         {$$ = $1;yy.addVertex($1,$3,'lean_right');}
     | idString INVTRAPSTART text TRAPEND
         {$$ = $1;yy.addVertex($1,$3,'lean_left');}
+    | idString EXCLAMATION HREF EXCLAMATION text
+        {$$ = $1;yy.addVertex($1,$5,'image',undefined,$3);}
     | idString
         { /*console.warn('h: ', $1);*/$$ = $1;yy.addVertex($1);}
     ;
@@ -442,7 +447,7 @@ text: textToken
 
 
 keywords
-    : STYLE | LINKSTYLE | CLASSDEF | CLASS | CLICK | GRAPH | DIR | subgraph | end | DOWN | UP;
+    : ICON | STYLE | LINKSTYLE | CLASSDEF | CLASS | CLICK | GRAPH | DIR | subgraph | end | DOWN | UP;
 
 
 textNoTags: textNoTagsToken
@@ -456,6 +461,10 @@ classDefStatement:CLASSDEF SPACE DEFAULT SPACE stylesOpt
     {$$ = $1;yy.addClass($3,$5);}
     | CLASSDEF SPACE alphaNum SPACE stylesOpt
           {$$ = $1;yy.addClass($3,$5);}
+    | CLASSDEF SPACE DEFAULT SPACE stylesOpt SPACE iconsOpt
+          {$$ = $1;yy.addClass($3,$5,$7);}
+    | CLASSDEF SPACE alphaNum SPACE stylesOpt SPACE iconsOpt
+          {$$ = $1;yy.addClass($3,$5,$7);}
     ;
 
 classStatement:CLASS SPACE alphaNum SPACE alphaNum
@@ -482,18 +491,24 @@ clickStatement
 styleStatement:STYLE SPACE alphaNum SPACE stylesOpt
     {$$ = $1;yy.addVertex($3,undefined,undefined,$5);}
     | STYLE SPACE HEX SPACE stylesOpt
-          {$$ = $1;yy.updateLink($3,$5);}
+          {$$ = $1;yy.updateLinkStyle($3,$5);}
+    ;
+
+iconStatement:ICON SPACE alphaNum SPACE iconsOpt
+    {$$ = $1;yy.addVertex($3,undefined,'image',undefined,$5);}
+    | ICON SPACE HEX SPACE iconsOpt
+          {$$ = $1;yy.updateLinkIcon($3,$5);}
     ;
 
 linkStyleStatement
     : LINKSTYLE SPACE DEFAULT SPACE stylesOpt
-          {$$ = $1;yy.updateLink([$3],$5);}
+          {$$ = $1;yy.updateLinkStyle([$3],$5);}
     | LINKSTYLE SPACE numList SPACE stylesOpt
-          {$$ = $1;yy.updateLink($3,$5);}
+          {$$ = $1;yy.updateLinkStyle($3,$5);}
     | LINKSTYLE SPACE DEFAULT SPACE INTERPOLATE SPACE alphaNum SPACE stylesOpt
-          {$$ = $1;yy.updateLinkInterpolate([$3],$7);yy.updateLink([$3],$9);}
+          {$$ = $1;yy.updateLinkInterpolate([$3],$7);yy.updateLinkStyle([$3],$9);}
     | LINKSTYLE SPACE numList SPACE INTERPOLATE SPACE alphaNum SPACE stylesOpt
-          {$$ = $1;yy.updateLinkInterpolate($3,$7);yy.updateLink($3,$9);}
+          {$$ = $1;yy.updateLinkInterpolate($3,$7);yy.updateLinkStyle($3,$9);}
     | LINKSTYLE SPACE DEFAULT SPACE INTERPOLATE SPACE alphaNum
           {$$ = $1;yy.updateLinkInterpolate([$3],$7);}
     | LINKSTYLE SPACE numList SPACE INTERPOLATE SPACE alphaNum
@@ -518,6 +533,19 @@ style: styleComponent
     ;
 
 styleComponent: ALPHA | COLON | MINUS | NUM | UNIT | SPACE | HEX | BRKT | DOT | STYLE | PCT ;
+
+iconsOpt: icon
+        {$$ = [$1]}
+    | iconsOpt COMMA icon
+        {$1.push($3);$$ = $1;}
+    ;
+
+icon: iconsComponent
+    |icon iconsComponent
+    {$$ = $1 + $2;}
+    ;
+
+iconsComponent: ALPHA | COLON | MINUS | NUM | UNIT | SPACE | HEX | BRKT | DOT | STYLE | PCT ;
 
 /* Token lists */
 
