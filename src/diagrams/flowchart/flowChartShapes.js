@@ -294,6 +294,29 @@ function cylinder(parent, bbox, node) {
   return shapeSvg;
 }
 
+/**
+ * @param parent
+ * @param bbox
+ * @param node
+ */
+function image(parent, bbox, node) {
+  const h = bbox.height;
+  const w = bbox.width + h / 4;
+
+  const shapeSvg = parent
+    .insert('image', ':first-child')
+    .attr('xlink:href', node.icon)
+    .attr('x', -w / 2)
+    .attr('y', -h / 2)
+    .attr('width', w)
+    .attr('height', h);
+
+  node.intersect = function (point) {
+    return dagreD3.intersect.rect(node, point);
+  };
+  return shapeSvg;
+}
+
 /** @param render */
 export function addToRender(render) {
   render.shapes().question = question;
@@ -301,6 +324,7 @@ export function addToRender(render) {
   render.shapes().stadium = stadium;
   render.shapes().subroutine = subroutine;
   render.shapes().cylinder = cylinder;
+  render.shapes().image = image;
 
   // Add custom shape for box with inverted arrow on left side
   render.shapes().rect_left_inv_arrow = rect_left_inv_arrow;
@@ -328,6 +352,7 @@ export function addToRenderV2(addShape) {
   addShape({ stadium });
   addShape({ subroutine });
   addShape({ cylinder });
+  addShape({ image });
 
   // Add custom shape for box with inverted arrow on left side
   addShape({ rect_left_inv_arrow });

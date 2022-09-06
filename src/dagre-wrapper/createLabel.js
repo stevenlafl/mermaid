@@ -39,7 +39,7 @@ function addHtmlLabel(node) {
   applyStyle(div, node.labelStyle);
   div.style('display', 'inline-block');
   // Fix for firefox
-  div.style('white-space', 'nowrap');
+
   div.attr('xmlns', 'http://www.w3.org/1999/xhtml');
   return fo.node();
 }

@@ -133,6 +133,9 @@ export const addVertices = function (vert, g, svgId, root, _doc, diagObj) {
       case 'cylinder':
         _shape = 'cylinder';
         break;
+      case 'image':
+        _shape = 'image';
+        break;
       case 'group':
         _shape = 'rect';
         break;
@@ -150,6 +153,7 @@ export const addVertices = function (vert, g, svgId, root, _doc, diagObj) {
       ry: radious,
       class: classStr,
       style: styles.style,
+      icon: vertex.icon,
       id: diagObj.db.lookUpDomId(vertex.id),
     });
   });
